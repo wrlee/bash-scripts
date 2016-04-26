@@ -58,6 +58,6 @@ function echo_align_column()
 
 function is_command()
 {
-	type "$@" &>/dev/null
+	type "$@" >/dev/null 2>&1
 	return $?
 }
