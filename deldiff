@@ -1,0 +1,176 @@
+#!/bin/bash
+## 2011-01-11 Ported from .btm file. "Bill Lee" <sourcecode@evolutedesign.com>
+## 2014-07-13 Use getopts and improved diagnostics
+
+source _include.sh
+
+__TESTONLY=0
+__NOTEST=0
+__HELP=0
+__Key=
+__RM_Y=
+
+while getopts "tcrnyh?" OPTNAME "$@"; do
+#	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
+	case "$OPTNAME" in
+      t) 
+         __TESTONLY=1
+		 ;;
+      c)
+         __Key=C
+         __NOTEST=1
+	     ;;
+      r)
+         __Key=R
+         __NOTEST=1
+		 ;;
+      y)
+         __RM_Y=-f
+         ;;
+
+      n)
+         __NOTEST=1
+		 ;;
+      h|?)
+		__HELP=1
+		;;
+      *)
+		echo -e "${t_red}Unexpected result from getopts${t_reset}".
+		break
+		;;
+	esac
+done
+shift $(($OPTIND-1))
+
+#while [ -n "$1" ]; do 
+#   case "$1" in
+#      -t) 
+#         __TESTONLY=1
+#		 ;;
+#      -c)
+#         __Key=C
+#         __NOTEST=1
+#	     ;;
+#      -r)
+#         __Key=R
+#         __NOTEST=1
+#		 ;;
+#      -n)
+#         __NOTEST=1
+#		 ;;
+#      -h|-\?)
+#		__HELP=1
+#		;;
+#      -*)
+#		echo Invalid swtich specified.
+#		echo
+#		__HELP=1
+#		;;
+#      *)
+#		break
+#		;;
+#   esac
+#   shift
+#done
+case "$OSTYPE" in
+darwin*)
+   FMT='-f %z'
+   ;;
+*)
+   FMT='-c %s'
+   ;;
+esac
+
+if [ $__HELP -eq 0 -a ! -d "$*" ]; then
+   if [ -z "$*" ]; then
+      echo -e "${t_red}No directory specified.${t_reset}"
+	  echo
+   else
+      echo -e "${t_red}'${t_cyan}$*${t_red}' is not a valid directory.${t_reset}"
+	  exit
+   fi
+   __HELP=1
+fi
+if [ $__HELP -eq 1 ]; then 
+	cat <<-EOHELP
+		Delete duplicate files from this "current" or "remote" directory. This 
+		iterates over all files in the current directory, looking for matches in the
+		remote directory (based on files of the same name). Matches are determined
+		by diff'ing the files. Matching files are deleted from either the current
+		or remote directory; you are prompted before deleting begins.
+		
+		   `basename $0` [switches] {remote_directory}
+		
+		where:
+		   remote_directory is a relative or absolute directory path.
+			
+		   switches are:
+		   	-c No prompt which directory to delete files from, delete the ones in  
+		   	   the "current" directory.
+		   	-r No prompt which directory to delete files from, delete the ones in  
+		   	   the "remote" directory.
+		   	-t "Test" only... do not delete any files.   
+		   	-n "No test", simply prompt (unless -c or -r are set) which directory
+		   	   to delete from. 
+EOHELP
+	exit
+fi
+if [ "$PWD" -ef "$*" ]; then
+	echo -e "${t_red}Directory is the same as this directory: \"${t_cyan}$*${t_red}\".${t_reset}"
+	exit 24
+fi
+
+echo "$*"
+echo -e "Comparing \"${t_cyan}$PWD${t_reset}\""
+echo -e "     with \"${t_cyan}$*${t_reset}\"."
+if [ $__NOTEST -eq 0 ]; then
+   for i in * .*; do
+      if [ -f "$*/$i" ]; then 
+         _f1=$i
+         _f2=$*/$i
+	     if [ `stat $FMT "$_f1"` -eq `stat $FMT "$_f2"` ]; then
+			 diff "$i" "$*/$i">/dev/null
+			 if [ $? -eq 0 ]; then
+				echo "$i"
+			 elif [ $? -eq 1 ]; then
+				echo "$i" does not match
+			 fi
+		 fi
+      fi
+   done
+fi
+if [ $__TESTONLY -ne 1 ]; then 
+	echo
+	while [ -z "$__Key" ]; do
+                echo -e "Current: \"${t_cyan}$PWD${t_reset}\""
+                echo -e "Remote:  \"${t_cyan}$*${t_reset}\"."
+		read -n 1 -rp "Delete (c)urrent or (r)emote duplicate files (C|R|Esc|Q)? "
+		echo
+		case $REPLY in
+	    c|C) __Key=C
+		   ;;
+	    r|R) __Key=R
+		   ;;
+        *)
+		exit
+	  esac
+	done
+	for f in * .*; do
+		if [ -f "$*/$f" ]; then
+			_f1=$f
+			_f2=$*/$f
+			if [ `stat $FMT "$_f1"` -eq `stat $FMT "$_f2"` ]; then
+				diff "$f" "$*/$f">/dev/null
+				if [ $? -eq 0 ]; then
+				   if [ $__Key = C ]; then
+					  rm $__RM_Y -v "$f"
+				   elif [ $__Key = R ]; then
+					  rm $__RM_Y -v "$*/$f"
+				   else
+					  echo -e "${t_red}Unexpected response '$__Key'${t_reset}"
+				   fi
+				fi
+			fi
+		 fi
+	done
+fi

@@ -1,0 +1,4 @@
+## Remove empty directories under the specified dir (or current dir)
+root=.
+[ -n "$*" ] && root="$*"
+find "$root" -depth -type d ! -name '.' -exec rmdir "{}" \;
