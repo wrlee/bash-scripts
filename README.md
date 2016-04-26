@@ -40,6 +40,17 @@ Remove empty directories under the specified dir (or current dir)
 Provides functions to perform `curl` command calls, returning HTTP response
 data and the http response code. You can call this script from the command line to run curl from the command line in a different manner and/or to see how the functions will perform within another script. 
 
+## ssh-addauth 
+Add specified .pub key to remote server
+```
+ssh-addauth [ -i priv_key.pem ] remote public_key_file...
+```
+<dl>
+<dt>remote<dd>Remote server (as would be specified to ssh)
+<dt>public_key_file<dd>normally a .pub file. 
+## ssh-list 
+List ssh keys that this login has enabled for access.
+
 ## touchdir
 Set directory time/date based on the newest content within it
 

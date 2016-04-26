@@ -1,0 +1,41 @@
+#!
+## Add specified .pub key to remote server
+
+while getopts "i:h?" OPTNAME "$@"; do
+#	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
+	case "$OPTNAME" in
+      i)
+		 if [ ! -f "$OPTARG" ]; then
+			echo -e "${t_red}\"$OPTARG\" does not exist.${t_reset}"
+		 	exit 
+		 fi
+         __KEY=-i "$OPTARG"
+		 ;;
+      h|?)
+		__HELP=1
+		;;
+      *)
+		echo -e "${t_red}Unexpected result from getopts.${t_reset}"
+		break
+		;;
+	esac
+done
+shift $(($OPTIND-1))
+
+if [ $# -lt 2 -o -n "$__HELP" ]; then
+	cat <<-ENDHERE
+	
+	Adds specified .pub keys to remote server.
+
+	Form:
+		$0 [ -i priv_key.pem ] remote public_key_file...
+
+ENDHERE
+	exit 24
+fi
+
+remote=$1
+shift
+
+ssh $_KEY $remote "cat >>.ssh/authorized_keys" < "$@"  
+scp $_KEY -p "$@" $remote:.ssh
