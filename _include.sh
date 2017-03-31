@@ -28,8 +28,8 @@ if [ -t 1 ]; then
 	t_white='\033[37m'
 fi
 
-## Print variable # of tabs based on size of field to output. This can be used
-## to pad fields for nice column alignment. 
+## Output variable # of tabs based on size of field to output. This can be used
+## to pad fields for nice column alignment.
 ##
 ## string=String
 ## echo -n "$string"
@@ -40,23 +40,27 @@ fi
 ## @param string $2: string to eval
 function echo_tabs_align() {
  	local iter=$(($1 - ${#2} / 8 ))
- 	[ $iter -gt 0 ] && for ((iter; iter; iter--)); do 
+ 	[ $iter -gt 0 ] && for ((iter; iter; iter--)); do
  		echo -en "\t"
  	done
 }
-## Print string an tabs to create a fixed width "column". 
+## Output string padded with tabs to create a fixed width "column".
 ##
 ## echo_align_column 5 "string"
 ## echo "last column string"
 ##
 ## @param int $1: max tabs
 ## @param string $2: string to eval
+## @see echo_tabs_align()
 function echo_align_column()
 {
 	echo -n "$2"
 	echo_tabs_align "$@"
 }
 
+ ## A silent (and consistent way) to determine if the specified command is accessible.
+ ##
+ ## @param string $1: Command name to test
 function is_command()
 {
 	type "$@" >/dev/null 2>&1
