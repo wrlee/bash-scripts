@@ -9,8 +9,8 @@ Scripts which are intended to be run from the command-line are marked as executa
 Common settings and functions for use in other scripts so that I don't have to keep rewriting this stuff for every script. It turns out that I don't use it as much as I though I would, because I don't like to have too many dependencies in scripts. 
 - ANSI color settings
 - `echo_tabs_align()`
-- `echo_align_column()`
-- `is_command()`
+- `echo_align_column()` — Output text padded with tabs necessary to create a fixed-width "column".
+- `is_command()` — A silent (and consistent way) to determine if the specified command is accessible. 
 
 ## deldiff
 Delete duplicate files from this "current" or "remote" directory. This
@@ -30,12 +30,22 @@ deldiff [switches] {remote_directory}
 	<dt>-t<dd>"Test" only... do not delete any files.
 	<dt>-n<dd>"No test", simply prompt (unless `-c` or `-r` are set) which directory to delete from.
 </dl></dl>
+
 ## delemptydirs
 Remove empty directories under the specified dir (or current dir)
 
 ## kurl.sh
 Provides functions to perform `curl` command calls, returning HTTP response
 data and the http response code. You can call this script from the command line to run curl from the command line in a different manner and/or to see how the functions will perform within another script. 
+
+## lpath
+List the path components of an environment variable (default uses PATH). 
+```
+lpath [ env-var ]
+```
+<dl>
+	<dt>env-var<dd>Name of the environment variable to list paths of (default, PATH)
+</dl>
 
 ## ssh-addauth 
 Add specified .pub key to remote server
@@ -46,6 +56,7 @@ ssh-addauth [ -i priv_key.pem ] remote public_key_file...
 	<dt>remote<dd>Remote server (as would be specified to ssh)
 	<dt>public_key_file<dd>normally a .pub file. 
 </dl>
+
 ## ssh-list 
 A pretty list of ssh keys that this login has enabled for access (as indicated by `authorized_keys`.
 
