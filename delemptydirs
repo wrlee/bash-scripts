@@ -1,4 +1,5 @@
 ## Remove empty directories under the specified dir (or current dir)
+[ "`uname`" != Darwin ] && VERBOSE=-v
 root=.
 [ -n "$*" ] && root="$*"
-find "$root" -depth -type d ! -name '.' -exec rmdir "{}" \;
+find "$root" -depth -type d ! -name '.' ! -path "*.lrdata/*" -exec rmdir $VERBOSE "{}" \;

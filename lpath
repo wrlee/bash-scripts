@@ -1,0 +1,6 @@
+pathvar=${1:-PATH}
+echo Path list for $pathvar:
+#eval echo \$$pathvar|sed 's/:/\n	/g'
+#eval echo \$$pathvar|sed 's/^/   /;s/:/:   /g'|tr ":" "\012"
+eval echo \$$pathvar|sed 's/^/   /;s/:/\
+   /g'

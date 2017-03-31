@@ -15,7 +15,8 @@ if [ ! -d "$target" ]; then
 fi
 
 ## Convenience settings
-shopt -s dotglob nullglob
+#shopt -s dotglob nullglob
+shopt -s nullglob
 ## Make sure directory has content
 newest=("$target"/*)
 if [ ${#newest[@]} -eq 0 ]; then
@@ -32,8 +33,12 @@ fi
 
 ## Sort content by modified time and get name of most recent.
 #newest=$(stat "${statparms[@]}" "$target"/*|grep -v '.DS_Store'|grep -vi 'picasa.ini'|sort -nr|head -1|cut -d ' ' -f2-)
-newest=$(stat "${statparms[@]}" "$target"/*|grep -ve '.DS_Store' -vie 'picasa.ini' -ve 'Thumbs.db'|sort -nr|head -1|cut -d ' ' -f2-)
+newest=$(stat "${statparms[@]}" "$target"/*|grep -ve '.DS_Store' -vie 'picasa.*\.ini' -ve 'Thumbs.db' -vie 'desktop.ini'|sort -nr|head -1|cut -d ' ' -f2-)
 newest="${newest:1:((${#newest}-2))}"
+if [ ${#newest} -eq 0 ]; then
+   echo "No relevant contents in '$target'"
+   exit 1
+fi
 
 #echo $newest
 #echo touch -r "${newest}" "$target"

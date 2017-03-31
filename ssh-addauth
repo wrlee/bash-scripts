@@ -22,7 +22,7 @@ while getopts "i:h?" OPTNAME "$@"; do
 done
 shift $(($OPTIND-1))
 
-if [ $# -lt 2 -o -n "$__HELP" ]; then
+if [ $# -lt 1 -o -n "$__HELP" ]; then
 	cat <<-ENDHERE
 	
 	Adds specified .pub keys to remote server.
@@ -34,8 +34,21 @@ ENDHERE
 	exit 24
 fi
 
-remote=$1
-shift
+if [ $# -gt 1 ]; then 
+	remote=$1
+	shift
+fi
+pubkey=$1
+if [ ! -r "$pubkey" ]; then
+	echo "\"$pubkey\" not found."
+	return 28
+fi
 
-ssh $_KEY $remote "cat >>.ssh/authorized_keys" < "$@"  
-scp $_KEY -p "$@" $remote:.ssh
+if [ -n "$remote" -a ! "$remote" = "." ]; then
+	## Append public key to remote's allowed keys.
+	ssh $_KEY $remote "cat >>.ssh/authorized_keys" < "$pubkey"  
+	## Copy key to remote
+	scp $_KEY -p "$pubkey" $remote:.ssh
+else
+	cat "$pubkey">>~/.ssh/authorized_keys
+fi

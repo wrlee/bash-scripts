@@ -9,7 +9,7 @@ Scripts which are intended to be run from the command-line are marked as executa
 Common settings and functions for use in other scripts so that I don't have to keep rewriting this stuff for every script. It turns out that I don't use it as much as I though I would, because I don't like to have too many dependencies in scripts. 
 - ANSI color settings
 - `echo_tabs_align()`
-- `echo_aligh_column()`
+- `echo_align_column()`
 - `is_command()`
 
 ## deldiff

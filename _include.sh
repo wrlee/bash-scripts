@@ -25,6 +25,7 @@ if [ -t 1 ]; then
 	t_cyan='\033[36m'
 #	t_brightCyan='\e[01;36m'
 	t_green='\033[32m'
+	t_white='\033[37m'
 fi
 
 ## Print variable # of tabs based on size of field to output. This can be used
