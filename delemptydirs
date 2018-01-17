@@ -2,4 +2,4 @@
 [ "`uname`" != Darwin ] && VERBOSE=-v
 root=.
 [ -n "$*" ] && root="$*"
-find "$root" -depth -type d ! -name '.' ! -path "*.lrdata/*" -exec rmdir $VERBOSE "{}" \;
+find "$root" -depth -type d ! -name '.' ! -path "*.lrdata/*" -empty -exec rmdir $VERBOSE "{}" \;

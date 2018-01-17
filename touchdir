@@ -2,10 +2,47 @@
 ##
 ## @todo Fix bug: If directory name contains a quote ('), this doesn't work.
 ## @todo Add -v switch to show directories being affected.
-## @todo Add -r, recurse, support 
+## @todo Add -r, recurse, support
 ##		(find . -depth -type d -exec ~/bin/touchdir {} \;)
 ## @todo Add -x or --exclude to specify files to exclude (e.g., .DS_Store, etc.)
 ## @todo Add -o to set the directory to the oldest date of its contents.
+
+unset _recurse
+declare -a _all=("" "-not" "-path" "*/.*")
+while getopts ":arh" OPTNAME "$@"; do
+#	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
+	case "$OPTNAME" in
+		a)	## Include "dot" files
+			_all=("-a")
+			;;
+		r) _recurse=1
+			;;
+#		h)
+#			__HELP=1
+#			break
+#			;;
+		\?)	## Invalid option
+			if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
+				echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
+			 	exit
+#			else
+#				__HELP=1
+#			 	break
+			fi
+			;;
+	   *) ## Unhandled, "valid" option
+		 	echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
+#		 	break
+		 	;;
+	esac
+done
+shift $(($OPTIND-1))
+
+## Call touchdir against every directory under the directory.
+if [ -n "$_recurse" ]; then
+	find "$@" -depth "${_all[@]:1}" -type d -exec "$0" ${_all[0]} "{}" \;
+	exit
+fi
 
 ## Target directory
 target="$1"
@@ -15,7 +52,7 @@ if [ ! -d "$target" ]; then
 fi
 
 ## Convenience settings
-#shopt -s dotglob nullglob
+[ -n "$_all" ] && shopt -s dotglob
 shopt -s nullglob
 ## Make sure directory has content
 newest=("$target"/*)
@@ -43,4 +80,5 @@ fi
 #echo $newest
 #echo touch -r "${newest}" "$target"
 ## Update target based on newest of its content
+#echo touch -r "${newest}" "$target"
 touch -r "${newest}" "$target"

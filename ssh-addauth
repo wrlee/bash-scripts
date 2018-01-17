@@ -1,52 +1,65 @@
 #!
-## Add specified .pub key to remote server
+## Add specified .pub key to (remote) server.
+## TODO: Allow multiple .pub files to be specified in a single invocation
+## TODO: Allow user@host to be specified for host parameter
 
-while getopts "i:h?" OPTNAME "$@"; do
+while getopts ":i:h" OPTNAME "$@"; do
 #	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
 	case "$OPTNAME" in
       i)
 		 if [ ! -f "$OPTARG" ]; then
 			echo -e "${t_red}\"$OPTARG\" does not exist.${t_reset}"
-		 	exit 
+		 	exit
 		 fi
          __KEY=-i "$OPTARG"
 		 ;;
-      h|?)
-		__HELP=1
-		;;
-      *)
-		echo -e "${t_red}Unexpected result from getopts.${t_reset}"
-		break
-		;;
+		 h)
+ 			__HELP=1
+ 			;;
+ 		\?)	## Invalid option
+ 			if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
+ 				echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
+ 			 	exit
+ 			else
+ 				__HELP=1
+ 			fi
+ 			;;
+ 	   *) ## Unhandled, "valid" option
+ 		 	echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
+ 		 	;;
 	esac
 done
 shift $(($OPTIND-1))
 
 if [ $# -lt 1 -o -n "$__HELP" ]; then
 	cat <<-ENDHERE
-	
+
 	Adds specified .pub keys to remote server.
 
 	Form:
-		$0 [ -i priv_key.pem ] remote public_key_file...
+		$0 [ -i priv_key.pem ] [host] public_key_file.pub
+
+	host: name of host to update. This should be the nickname for an entry in the
+		.ssh/config file. If not specified, the key is added to the current account.
+	public_key_file.pub: Public key to be added to host.
 
 ENDHERE
 	exit 24
 fi
 
-if [ $# -gt 1 ]; then 
+if [ $# -gt 1 ]; then
 	remote=$1
 	shift
 fi
 pubkey=$1
 if [ ! -r "$pubkey" ]; then
 	echo "\"$pubkey\" not found."
-	return 28
+	exit 28
 fi
 
 if [ -n "$remote" -a ! "$remote" = "." ]; then
 	## Append public key to remote's allowed keys.
-	ssh $_KEY $remote "cat >>.ssh/authorized_keys" < "$pubkey"  
+	ssh $_KEY $remote "cat >>.ssh/authorized_keys" < "$pubkey"
 	## Copy key to remote
 	scp $_KEY -p "$pubkey" $remote:.ssh
 else

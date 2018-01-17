@@ -11,7 +11,7 @@ When this writeup describes the usage of a script, parameters in brackets […],
 indicated optional parameters.
 
 ## _include.sh
-Common settings and functions for use in other scripts so that I don't have to keep rewriting this stuff for every script. It turns out that I don't use it as much as I though I would, because I don't like to have too many dependencies in scripts.
+Common settings and functions for use in other scripts so that I don't have to keep rewriting this stuff for every script. It turns out that I don't use it as much as I thought I would, because I don't like to have too many dependencies in scripts.
 - ANSI color settings
 - `echo_tabs_align()`
 - `echo_align_column()` — Output text padded with tabs necessary to create a fixed-width "column".
@@ -55,7 +55,7 @@ lpath [ env_var ]
 ## ssh-addauth
 Add specified .pub key to remote server
 ```
-ssh-addauth [ -i priv_key.pem ] remote public_key_file...
+ssh-addauth [ -i priv_key.pem ] [host] public_key_file...
 ```
 <dl>
 	<dt>remote<dd>Remote server (as would be specified to ssh)
@@ -63,7 +63,15 @@ ssh-addauth [ -i priv_key.pem ] remote public_key_file...
 </dl>
 
 ## ssh-list
-A pretty list of ssh keys that this login has enabled for access (as indicated by `authorized_keys`.
+A pretty list of ssh keys that this login has enabled for access (as indicated by `authorized_keys`).
 
 ## touchdir
-Set directory time/date based on the newest content within it
+Set directory's time/date based on the newest content within it. 
+```
+touchdir [switches] [target-dir]
+```
+<dl>
+	<dt>target-dir<dd>The directory to set. Default is `.`
+	<dt>-a<dd>Check "all" files, i.e., dot-files, for latest date/time.
+	<dt>-r<dd>Recurse, setting all directories' date/times within the target directory tree.
+</dl>

@@ -10,41 +10,48 @@ __HELP=0
 __Key=
 __RM_Y=
 
-while getopts "tcrnyh?" OPTNAME "$@"; do
+while getopts ":tcrnyh" OPTNAME "$@"; do
 #	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
 	case "$OPTNAME" in
-      t) 
+      t)
          __TESTONLY=1
-		 ;;
+			;;
       c)
          __Key=C
          __NOTEST=1
-	     ;;
+	   	;;
       r)
          __Key=R
          __NOTEST=1
-		 ;;
+			;;
       y)
          __RM_Y=-f
          ;;
 
       n)
          __NOTEST=1
-		 ;;
-      h|?)
-		__HELP=1
-		;;
-      *)
-		echo -e "${t_red}Unexpected result from getopts${t_reset}".
-		break
-		;;
+			;;
+      h)
+			__HELP=1
+			;;
+		\?)	## Invalid option
+			if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
+				echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
+			 	exit
+			else
+				__HELP=1
+			fi
+			;;
+	   *) ## Unhandled, "valid" option
+		 	echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
+		 	;;
 	esac
 done
 shift $(($OPTIND-1))
 
-#while [ -n "$1" ]; do 
+#while [ -n "$1" ]; do
 #   case "$1" in
-#      -t) 
+#      -t)
 #         __TESTONLY=1
 #		 ;;
 #      -c)
@@ -91,27 +98,27 @@ if [ $__HELP -eq 0 -a ! -d "$*" ]; then
    fi
    __HELP=1
 fi
-if [ $__HELP -eq 1 ]; then 
+if [ $__HELP -eq 1 ]; then
 	cat <<-EOHELP
-		Delete duplicate files from this "current" or "remote" directory. This 
+		Delete duplicate files from this "current" or "remote" directory. This
 		iterates over all files in the current directory, looking for matches in the
 		remote directory (based on files of the same name). Matches are determined
 		by diff'ing the files. Matching files are deleted from either the current
 		or remote directory; you are prompted before deleting begins.
-		
+
 		   `basename $0` [switches] {remote_directory}
-		
+
 		where:
 		   remote_directory is a relative or absolute directory path.
-			
+
 		   switches are:
-		   	-c No prompt which directory to delete files from, delete the ones in  
+		   	-c No prompt which directory to delete files from, delete the ones in
 		   	   the "current" directory.
-		   	-r No prompt which directory to delete files from, delete the ones in  
+		   	-r No prompt which directory to delete files from, delete the ones in
 		   	   the "remote" directory.
-		   	-t "Test" only... do not delete any files.   
+		   	-t "Test" only... do not delete any files.
 		   	-n "No test", simply prompt (unless -c or -r are set) which directory
-		   	   to delete from. 
+		   	   to delete from.
 EOHELP
 	exit
 fi
@@ -125,11 +132,10 @@ echo -e "Comparing \"${t_cyan}$PWD${t_reset}\""
 echo -e "     with \"${t_cyan}$*${t_reset}\"."
 if [ $__NOTEST -eq 0 ]; then
    for i in * .*; do
-      if [ -f "$*/$i" ]; then 
-         _f1=$i
-         _f2=$*/$i
-	     if [ `stat $FMT "$_f1"` -eq `stat $FMT "$_f2"` ]; then
-			 diff "$i" "$*/$i">/dev/null
+      if [ -f "$*/$i" ]; then
+         _remote=$*/$i
+	     if [ "$(stat $FMT "$i")" -eq "$(stat $FMT "$_remote")" ]; then
+			 diff "$i" "$_remote">/dev/null
 			 if [ $? -eq 0 ]; then
 				echo "$i"
 			 elif [ $? -eq 1 ]; then
@@ -139,7 +145,7 @@ if [ $__NOTEST -eq 0 ]; then
       fi
    done
 fi
-if [ $__TESTONLY -ne 1 ]; then 
+if [ $__TESTONLY -ne 1 ]; then
 	echo
 	while [ -z "$__Key" ]; do
                 echo -e "Current: \"${t_cyan}$PWD${t_reset}\""
@@ -157,15 +163,14 @@ if [ $__TESTONLY -ne 1 ]; then
 	done
 	for f in * .*; do
 		if [ -f "$*/$f" ]; then
-			_f1=$f
-			_f2=$*/$f
-			if [ `stat $FMT "$_f1"` -eq `stat $FMT "$_f2"` ]; then
-				diff "$f" "$*/$f">/dev/null
+			_remote=$*/$f
+			if [ "$(stat $FMT "$f")" -eq "$(stat $FMT "$_remote")" ]; then
+				diff "$f" "$_remote">/dev/null
 				if [ $? -eq 0 ]; then
 				   if [ $__Key = C ]; then
 					  rm $__RM_Y -v "$f"
 				   elif [ $__Key = R ]; then
-					  rm $__RM_Y -v "$*/$f"
+					  rm $__RM_Y -v "$_remote"
 				   else
 					  echo -e "${t_red}Unexpected response '$__Key'${t_reset}"
 				   fi

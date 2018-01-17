@@ -19,9 +19,11 @@
 ##
 if [ -t 1 ]; then
 	t_reset='\033[0m'
+	t_blink='\033[5m'
 	t_bold='\033[1m'
 	t_red='\033[31m'
 	t_yellow='\e[33m'
+	t_blue='\e[34m'
 	t_cyan='\033[36m'
 #	t_brightCyan='\e[01;36m'
 	t_green='\033[32m'
