@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+## Parse git status results for briefer view
+## TODO: Add -a switch to include Untracked files.
+ansi=`type -fp _include.sh` && source $ansi
+[ -n "${t_green}" ] && t_green="\\${t_green}"
+[ -n "${t_red}" ] && t_red="\\${t_red}"
+[ -n "${t_reset}" ] && t_reset="\\${t_reset}"
+sed -En '
+	/^On branch / {
+		s/On branch (.*)/Branch '\'"${t_green}"'\1'"${t_reset}"\''/
+		s/\\(033|e)//g
+		h
+		:next
+		n
+		/^$/ b next
+		/^No commits yet/ {
+			s/^(No commits yet)/:  \1/
+			H;x;s/\n//
+		}
+		/^Your branch/ {
+			s/^Your branch//
+			H;x;s/\n//
+		}
+		/^Branch '\''/ !{
+			x;p;x
+		}
+	}
+	s/^Changes to be committed:$/Staged files:/
+	s/^Changes not staged for commit:$/Unstaged files:/
+	s/ +\([^\(]*use \"git .*\)//
+	/^(nothing to commit, working tree clean)?$/d
+	/^Staged/,/^[a-zA-Z]/ {
+		s/	(deleted:.*)/	'"${t_red}"'\1'"${t_reset}"'/
+		s/	((new file|modified|renamed):.*)/	'"${t_green}"'\1'"${t_reset}"'/
+	}
+	/^Unstaged/,/^[a-zA-Z]/ {
+		s/	((modified|deleted|renamed):.*)/	'""'\1'"${t_reset}"'/
+	}
+	s/\\(033|e)//g
+	/^Unmerged/,/^[a-zA-Z]/ {
+		s/	([^:]+:.*)/	'"${t_red}"'\1'"${t_reset}"'/
+	}
+	/^Untracked files:$/,/^[a-zA-Z]/ {
+		/^Untracked files:$/ s/Untracked files:/Untracked files '"${t_red}"'exist'"${t_reset}".'\
+		/
+		/^[ 	]/ d
+	}
+	s/^no/No/
+	s/\\(033|e)//g
+	p' <(git status)|\
+	awk '
+		(staged || unstaged) && /^[^ \t]/ {
+			staged = 0
+			unstaged = 0
+		}
+		/^Staged files/ {
+			staged = 1
+		}
+		/^Unstaged files/ {
+			unstaged = 1
+		}
+		unstaged && /^[ \t]/ {
+			a=$0
+			sub(/^[^:]+:[ \t]+/,"",a)
+			if (a in files) printf "'"${t_red/\033/}"'"
+		}
+		//
+		staged && /^[ \t]/ {
+			a=$0
+			sub(/^[^:]+:[ \t]+/,"",a)
+			files[a]=1
+		}
+	'

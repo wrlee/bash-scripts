@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+## Compare directories, ignoring .svn directories
+printf '%q ' diff -r -x '.svn' -x '.git' "$@"
+printf '\n\n'
+diffcolored -r -x '.svn' -x '.git' -x 'node_modules' "$@"

@@ -2,7 +2,30 @@
 
 A collection of Bash utility shell-scripts that I thought _must_ be useful to others.
 
-#### naming conventions
+---
+- [_include.sh](#_includesh)
+- [deldiff](#deldiff)
+- [delemptydirs](#delemptydirs)
+- [kurl.sh](#kurlsh)
+- [lpath](#lpath)
+- [ssh-addauth](#ssh-addauth)
+- [ssh-list](#ssh-list)
+- [touchdir](#touchdir)
+- [tree](#tree)
+- [deduppath.sh](#deduppathsh)
+- [deldiffdir](#deldiffdir)
+- [diffcolored](#diffcolored)
+- [diffdir](#diffdir)
+- [fssync-build.sh](#fssync-buildsh)
+- [fssync.sh](#fssyncsh)
+- [Git subcommands](#git-subcommands)
+	- [git-addupdated](#git-addupdated)
+	- [git-alias](#git-alias)
+	- [git-filestatus](#git-filestatus)
+	- [git-ignore](#git-ignore)
+___
+
+### Naming conventions
 Scripts which are intended to be run from the command-line are marked as executable. Generally, those which are not intended to run from the command line use the .sh suffix. They, of course, can still be run by invoking them via the shell command:
 ```
 $SHELL myscript.sh
@@ -66,7 +89,7 @@ ssh-addauth [ -i priv_key.pem ] [host] public_key_file...
 A pretty list of ssh keys that this login has enabled for access (as indicated by `authorized_keys`).
 
 ## touchdir
-Set directory's time/date based on the newest content within it. 
+Set directory's time/date based on the newest content within it.
 ```
 touchdir [switches] [target-dir]
 ```
@@ -75,3 +98,50 @@ touchdir [switches] [target-dir]
 	<dt>-a<dd>Check "all" files, i.e., dot-files, for latest date/time.
 	<dt>-r<dd>Recurse, setting all directories' date/times within the target directory tree.
 </dl>
+
+## tree
+Display tree structure
+## deduppath.sh
+Remote deplicate paths from "path" environment varialbes like `PATH`, `MANPATH`, etc. This scripted must be sourced in order for changes to affect the calling environment.
+```
+source delduppath.sh MANPATH
+```
+## deldiffdir
+Delete files in specified tree matching files and relative location in current tree based on file `diff`ing. This script uses [diffdir](#diffdir), recursively to perform comparisons.
+```
+deldiffdir /remote/path/to/compare
+```
+## diffcolored
+Output colored diff
+```
+diffcolored
+```
+## diffdir
+Compare directories, omitting hidden directories (e.g., `.git`)
+## fssync-build.sh
+When a filtered set of files change within the directory structure, a command is run. This is a rudamentary "watch" command.
+```
+fssync-build.sh
+```
+## fssync.sh
+Sync select files to remote machine, mimicing the same relative directory structure
+```
+fssync.sh -f ...
+```
+Specify the remote server/directory root which matches the current directory as the local root.
+# Git subcommands
+## git-addupdated
+Add modifed files to staging.
+```
+git addupdated
+```
+## git-alias
+## git-filestatus
+## git-ignore
+Add specified files to git-ignore list
+```
+git ignore name […name]
+```
+where:<dl>
+	<dt>name<dd>is a file or directory
+</dd>

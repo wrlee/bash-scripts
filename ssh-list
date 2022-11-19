@@ -1,20 +1,23 @@
 #!/bin/bash
-## This script lists the .pub file(s) that are in the authorized_keys list. 
+## This script lists the .pub file(s) that are in the authorized_keys list.
 ## Then it lists records for which no .pub file exists.
 ##
 ## 2013-08-08 Created by Bill Lee <bill@evolutedesign.com>
 
 source _include.sh
 
+SSHROOT=~/.ssh
+AUTHKEYS=$SSHROOT/authorized_keys
+
 ## List *.pub files, flagging those included in authorized_keys.
-if [ ! -r ~/.ssh/authorized_keys ]; then
-	echo "No authorized public keys stored in ~/.ssh/authorized_keys."
+if [ ! -r "$AUTHKEYS" ]; then
+	echo "No authorized public keys stored in $AUTHKEYS."
 	exit
 fi
 
-ls ~/.ssh/*.pub &> /dev/null && for pub in ~/.ssh/*.pub; do 
+ls $SSHROOT/*.pub &> /dev/null && for pub in $SSHROOT/*.pub; do
 	filename=
-	if grep -q "^$(awk '{print $1,$2}' $pub)" ~/.ssh/authorized_keys; 
+	if grep -q "^$(awk '{print $1,$2}' $pub)" "$AUTHKEYS";
 		then echo_align_column 4 "* $(basename $pub)"
 		else echo_align_column 4 "  $(basename $pub)"
 #		then echo -e '* '$(basename $pub)"\t"$(awk '{print $1,$NF}' $pub)
@@ -25,7 +28,7 @@ done
 echo
 ## List records for which there is no .pub file.
 #expath=$(dirname $(which "$0"))
-#awk -f $expath/$(basename $0).awk ~/.ssh/authorized_keys
+#awk -f $expath/$(basename $0).awk "$AUTHKEYS"
 awk '
 BEGIN {
 	if (system("which tput &>/dev/null") == 0)
@@ -34,17 +37,17 @@ BEGIN {
 		COLUMNS=80
 	hasPrinted=0
 }
-	
+
 ## Check each record to see if its relevant part exists in any .pub file.
 {
-	rc=system("grep -q -l \"^"$1" "$2"\" ~/.ssh/*.pub")
+	rc=system("grep -q -l \"^"$1" "$2"\" '$SSHROOT'/*.pub")
 }
 
 ## If .pub file has been found:
 rc == 0 {
 	## NOP
 }
-		
+
 ## If .pub file is not found:
 rc != 0 {
 	if (!hasPrinted) {
@@ -53,4 +56,4 @@ rc != 0 {
 	}
 	print " ",$3" "$1,substr($2,0,COLUMNS-length($3)-length($1)-7)"..."
 }
-' ~/.ssh/authorized_keys
+' "$AUTHKEYS"

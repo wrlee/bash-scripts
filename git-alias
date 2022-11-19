@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+## Define or list a global git alias
+##
+## Manually set alias for this command: git config --global alias.alias '!git-alias'
+##
+## Then you can set aliases as:
+##	git alias pop 'stash pop'
+##
+## and list aliases with a simple:
+##
+## 	git alias
+##
+if [ $# -gt 0 ]; then
+	name=$1
+	shift
+	if [ -n "${name#*=}" ]; then
+		cmd="${name#*=}"
+		name="${name%=*}"
+	else
+		cmd=
+	fi
+	git config --global alias.$name "$cmd" "$@"
+	rc=$?
+	git config --global --list | sed -n "/^alias.$name/s/alias.//p"
+	exit $rc
+else
+	git config --global --list | sed -n '/^alias/s/alias.//p'
+fi
+
+declare -a dirs
+shopt -s nullglob
+IFS=:
+dirs=($PATH)
+for i in "${dirs[@]}"; do
+	dir="$i"
+	for j in "$i/git-"*; do
+		if [ -n "$dir" ]; then
+			dir=${dir/$HOME/~}
+			echo "${dir}:"
+			dir=
+		fi
+		cmd=$(basename "$j")
+		cmd=${cmd/#git-/}
+		# cmd=${j/#*git-/}
+		cmd=${cmd/%.exe/}
+		#		echo -e "$cmd\t\t$dir"
+		echo "   $cmd"
+	done
+done | more

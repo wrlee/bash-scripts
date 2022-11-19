@@ -1,0 +1,8 @@
+#!/bin/sh
+
+#git add `git status |command grep -E '^	modified:'|sed 's/^\tmodified: *//'`
+git add `git status |sed -En '/^	*(:?both )?(:?modified|added(:? by them)?):/ s/^.*(:?both )?(:?modified|added(:? by them)?): *//p'`
+if which git-filestatus;
+	then git-filestatus
+	else git status
+fi

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+## Ignore specified filespecs by adding them to the .gitignore file.
+##
+## Use:
+##   git config --global alias.ignore '!git-ignore'
+##
+## TODO: Allow --global to use `git config --global core.excludesfile`, instead
+optspec=":-:"
+while getopts "$optspec" optchar; do
+   case "${optchar}" in
+      -)
+         case "${OPTARG}" in
+            global)
+            __global=true
+            ;;
+            *)
+            if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
+               echo "Unknown option --${OPTARG}" >&2
+            fi
+            ;;
+         esac
+         ;;
+      h)
+         echo "usage: $0 [-v] [--loglevel[=]<value>]" >&2
+         exit 2
+         ;;
+      v)
+         echo "Parsing option: '-${optchar}'" >&2
+         ;;
+      *)
+         if [ "$OPTERR" != 1 ] || [ "${optspec:0:1}" = ":" ]; then
+            echo "Non-option argument: '-${OPTARG}'" >&2
+         fi
+         ;;
+   esac
+done
+shift $(($OPTIND-1))
+
+get_global_ignore()
+{
+   gitfile=`git config --global --get core.excludesFile`
+	if [ -z "$gitfile" ]; then
+      gitfile="$HOME/.config/git/ignore"
+		[ -n "$XDG_CONFIG_HOME" ] && gitfile="$XDG_CONFIG_HOME/git/ignore"
+	fi
+}
+
+## Determine file when --global is specified
+if [ -n "$__global" ]; then
+   get_global_ignore
+   [ ! -d "$(dirname "$gitfile")" ] && mkdir -p "$(dirname "$gitfile")"
+else
+	gitfile='.gitignore'
+fi
+
+## If no parameters, list current ignored files.
+if [ $# -eq 0 ]; then
+   if [ ! "$gitfile" = "${gitfile/\//}" ]; then
+   	if [ -r $gitfile ]; then
+   		more $gitfile
+   	else
+   		echo No files ignored.
+   	fi
+   else
+      git_root=$(git rev-parse --show-toplevel)
+      git_offset=$(git rev-parse --show-prefix)
+      if [ -r ".gitignore" ]; then
+         echo $git_offset/.gitignore:
+         sed '/^[ \t]*#/d;s/^/   /' ".gitignore" | more
+      fi
+      until [ "$git_offset" = . ]; do
+         git_offset=$(dirname "$git_offset")
+         if [ -r "${git_root}/${git_offset}/.gitignore" ]; then
+            echo $git_offset/.gitignore:
+            sed '/^[ \t]*#/d;s/^/   /' "$git_root/$git_offset/.gitignore" | more
+         fi
+      done
+      git_root="$(git rev-parse --git-dir)/info/exclude"
+      if [ -r "$git_root" ]; then
+         echo "$git_root":
+         sed '/^[ \t]*#/d;s/^/   /' "$git_root" | more
+      fi
+      get_global_ignore
+      if [ -r "$gitfile" ]; then
+         echo $gitfile:
+         sed '/^[ \t]*#/d;s/^/   /' "$gitfile" | more
+      fi
+   fi
+	exit
+fi
+
+## For each filespec, add it to ignore list.
+for spec in "$@"; do
+	echo Adding "$spec"
+	echo "$spec" >>$gitfile
+done

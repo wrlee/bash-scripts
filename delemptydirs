@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ## Remove empty directories under the specified dir (or current dir)
 [ "`uname`" != Darwin ] && VERBOSE=-v
 root=.

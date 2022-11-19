@@ -1,32 +1,31 @@
-#!
+#!/usr/bin/env bash
 ## Add specified .pub key to (remote) server.
-## TODO: Allow multiple .pub files to be specified in a single invocation
 ## TODO: Allow user@host to be specified for host parameter
 
 while getopts ":i:h" OPTNAME "$@"; do
 #	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
 	case "$OPTNAME" in
       i)
-		 if [ ! -f "$OPTARG" ]; then
-			echo -e "${t_red}\"$OPTARG\" does not exist.${t_reset}"
-		 	exit
-		 fi
-         __KEY=-i "$OPTARG"
-		 ;;
-		 h)
- 			__HELP=1
- 			;;
- 		\?)	## Invalid option
- 			if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
- 				echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
- 			 	exit
- 			else
- 				__HELP=1
- 			fi
- 			;;
- 	   *) ## Unhandled, "valid" option
- 		 	echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
- 		 	;;
+				if [ ! -f "$OPTARG" ]; then
+					echo -e "${t_red}\"$OPTARG\" does not exist.${t_reset}"
+					exit
+				fi
+						__KEY=-i "$OPTARG"
+				;;
+			h)
+				__HELP=1
+				;;
+ 	 	 \?)	## Invalid option
+				if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
+					echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
+					exit
+				else
+					__HELP=1
+				fi
+				;;
+ 	   	*) ## Unhandled, "valid" option
+				echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
+				;;
 	esac
 done
 shift $(($OPTIND-1))
@@ -37,31 +36,54 @@ if [ $# -lt 1 -o -n "$__HELP" ]; then
 	Adds specified .pub keys to remote server.
 
 	Form:
-		$0 [ -i priv_key.pem ] [host] public_key_file.pub
+		$0 [ -i priv_key.pem ] [host] [public_key_file.pub]
 
 	host: name of host to update. This should be the nickname for an entry in the
 		.ssh/config file. If not specified, the key is added to the current account.
-	public_key_file.pub: Public key to be added to host.
+	public_key_file.pub: Public key to be added to host. If not specified, find
+		default keys.
 
 ENDHERE
 	exit 24
 fi
 
-if [ $# -gt 1 ]; then
-	remote=$1
-	shift
+sshhosts() {
+	if [ -e  ~/.ssh/config ]; then
+		sed -En "/^Host[[:space:]]+$1[[:space:]]*\$/s/Host[ \t]*//p" ~/.ssh/config
+	else
+		echo -n ''
+	fi
+}
+## The first parameter can be a remote or a public key file.
+## First check that it is a known Host in the config.
+if [ $# -gt 0 ]; then
+	remote=$(sshhosts "$1")
+	[ -n "$remote" ] && shift
 fi
 pubkey=$1
-if [ ! -r "$pubkey" ]; then
-	echo "\"$pubkey\" not found."
-	exit 28
+
+if [ -z "$pubkey" ]; then
+	for i in ~/.ssh/id_*.pub; do
+		pubkey=$i
+	done
+	echo "Using \"~${pubkey#~}\""
 fi
 
-if [ -n "$remote" -a ! "$remote" = "." ]; then
-	## Append public key to remote's allowed keys.
-	ssh $_KEY $remote "cat >>.ssh/authorized_keys" < "$pubkey"
-	## Copy key to remote
-	scp $_KEY -p "$pubkey" $remote:.ssh
-else
-	cat "$pubkey">>~/.ssh/authorized_keys
-fi
+while [ -n "$pubkey" ]; do
+	if [ ! -r "$pubkey" -a \( "${pubkey::1}" = / -o ! -r ~/.ssh/"${pubkey}" \) ]; then
+		echo "Public key \"$pubkey\" not found."
+	else
+		[ ! -r "$pubkey" -a -r ~/.ssh/"${pubkey}" ] && pubkey=~/.ssh/"${pubkey}"
+		echo "Adding public key ${pubkey#~/.ssh/} ${remote:+to $remote}"
+		if [ -n "$remote" -a ! "$remote" = "." ]; then
+			## Append public key to remote's allowed keys.
+			ssh $_KEY $remote "cat >>.ssh/authorized_keys" < "$pubkey"
+			## Copy key to remote
+			scp $_KEY -p "$pubkey" $remote:.ssh
+		else
+			cat "$pubkey">>~/.ssh/authorized_keys
+		fi
+	fi
+	shift
+	pubkey=$1
+done

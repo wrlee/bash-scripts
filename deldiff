@@ -1,6 +1,9 @@
 #!/bin/bash
 ## 2011-01-11 Ported from .btm file. "Bill Lee" <sourcecode@evolutedesign.com>
 ## 2014-07-13 Use getopts and improved diagnostics
+## 2019-08-26 Add -- options to stat, diff, rm commands to allow filenames starting w/'-'
+##
+## TODO: Check/remove matching symlinks
 
 source _include.sh
 
@@ -10,75 +13,38 @@ __HELP=0
 __Key=
 __RM_Y=
 
-while getopts ":tcrnyh" OPTNAME "$@"; do
+while getopts "tcrnyh?" OPTNAME "$@"; do
 #	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
 	case "$OPTNAME" in
       t)
          __TESTONLY=1
-			;;
+		 ;;
       c)
          __Key=C
          __NOTEST=1
-	   	;;
+	     ;;
       r)
          __Key=R
          __NOTEST=1
-			;;
+		 ;;
       y)
          __RM_Y=-f
          ;;
 
       n)
          __NOTEST=1
-			;;
-      h)
-			__HELP=1
-			;;
-		\?)	## Invalid option
-			if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
-				echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
-			 	exit
-			else
-				__HELP=1
-			fi
-			;;
-	   *) ## Unhandled, "valid" option
-		 	echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
-		 	;;
+		 ;;
+      h|?)
+		__HELP=1
+		;;
+      *)
+		echo -e "${t_red}Unexpected result from getopts${t_reset}".
+		break
+		;;
 	esac
 done
 shift $(($OPTIND-1))
 
-#while [ -n "$1" ]; do
-#   case "$1" in
-#      -t)
-#         __TESTONLY=1
-#		 ;;
-#      -c)
-#         __Key=C
-#         __NOTEST=1
-#	     ;;
-#      -r)
-#         __Key=R
-#         __NOTEST=1
-#		 ;;
-#      -n)
-#         __NOTEST=1
-#		 ;;
-#      -h|-\?)
-#		__HELP=1
-#		;;
-#      -*)
-#		echo Invalid swtich specified.
-#		echo
-#		__HELP=1
-#		;;
-#      *)
-#		break
-#		;;
-#   esac
-#   shift
-#done
 case "$OSTYPE" in
 darwin*)
    FMT='-f %z'
@@ -133,9 +99,10 @@ echo -e "     with \"${t_cyan}$*${t_reset}\"."
 if [ $__NOTEST -eq 0 ]; then
    for i in * .*; do
       if [ -f "$*/$i" ]; then
-         _remote=$*/$i
-	     if [ "$(stat $FMT "$i")" -eq "$(stat $FMT "$_remote")" ]; then
-			 diff "$i" "$_remote">/dev/null
+         _f1=$i
+         _f2=$*/$i
+	     if [ `stat $FMT -- "$_f1"` -eq `stat $FMT -- "$_f2"` ]; then
+			 diff -- "$i" "$*/$i">/dev/null
 			 if [ $? -eq 0 ]; then
 				echo "$i"
 			 elif [ $? -eq 1 ]; then
@@ -148,8 +115,8 @@ fi
 if [ $__TESTONLY -ne 1 ]; then
 	echo
 	while [ -z "$__Key" ]; do
-                echo -e "Current: \"${t_cyan}$PWD${t_reset}\""
-                echo -e "Remote:  \"${t_cyan}$*${t_reset}\"."
+    echo -e "Current: \"${t_cyan}$PWD${t_reset}\""
+    echo -e "Remote:  \"${t_cyan}$*${t_reset}\"."
 		read -n 1 -rp "Delete (c)urrent or (r)emote duplicate files (C|R|Esc|Q)? "
 		echo
 		case $REPLY in
@@ -163,14 +130,15 @@ if [ $__TESTONLY -ne 1 ]; then
 	done
 	for f in * .*; do
 		if [ -f "$*/$f" ]; then
-			_remote=$*/$f
-			if [ "$(stat $FMT "$f")" -eq "$(stat $FMT "$_remote")" ]; then
-				diff "$f" "$_remote">/dev/null
+			_f1=$f
+			_f2=$*/$f
+			if [ `stat $FMT -- "$_f1"` -eq `stat $FMT -- "$_f2"` ]; then
+				diff -- "$f" "$*/$f">/dev/null
 				if [ $? -eq 0 ]; then
 				   if [ $__Key = C ]; then
-					  rm $__RM_Y -v "$f"
+					  rm $__RM_Y -v -- "$f"
 				   elif [ $__Key = R ]; then
-					  rm $__RM_Y -v "$_remote"
+					  rm $__RM_Y -v -- "$*/$f"
 				   else
 					  echo -e "${t_red}Unexpected response '$__Key'${t_reset}"
 				   fi

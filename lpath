@@ -9,4 +9,8 @@ echo Path list for \"$pathvar\":
 #eval echo \$$pathvar|sed 's/^/\t/;s/:/\n\t/g'
 #eval echo \$$pathvar|sed 's/^/   /;s/:/\
 #   /g' #|tr ":" "\012"
-eval echo \$$pathvar|tr ':' '\n'|sed 's/^/   /'
+if [ "$BASH" ]; then
+  echo ${!pathvar}|sed 's/^/   /;s/:/\n   /g'
+else
+  eval echo \$$pathvar|tr ':' '\n'|sed 's/^/   /'
+fi

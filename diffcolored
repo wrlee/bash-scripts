@@ -1,0 +1,17 @@
+#!/bin/sh
+## Output diff output in color
+
+DIFF='7;32'
+NONE='1;37'
+ADDED='1;32'
+REMOVED='1;31'
+
+command diff "$@" |tr -d '\r'| sed 's/^>/+/;s/^</-/' |\
+# if [ `uname` = Darwin ]; then
+if [ `uname` = Darwin -o `uname` = Linux ]; then
+#  command diff "$@"|tr -d '\r'| sed 's/^>/+/;s/^</-/'|GREP_COLOR=$DIFF grep --color=always -E '^[^\-\+].*|$'|GREP_COLOR=$ADDED grep --color=always -E '^\+.*|$'|GREP_COLOR=$REMOVED grep --color=always -E '^\-[^\-].*|$'
+   GREP_COLOR=$DIFF grep --color=always -E '^diff .*|$'|GREP_COLOR=$NONE grep --color=always -E '^[^-+].*|$'|GREP_COLOR=$ADDED grep --color=always -E '^\+.*|$'|GREP_COLOR=$REMOVED grep --color=always -E '^-[^\-].*|$'
+else
+   GREP_COLOR=$DIFF grep --color=always -E '^diff .*|' |GREP_COLOR=$NONE grep --color=always -E '^[^-+].*|' |GREP_COLOR=$ADDED grep --color=always -E '^\+.*|' |GREP_COLOR=$REMOVED grep --color=always -E '^-[^\-].*|'
+fi |\
+more

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+## This runs deldiff against a target directory, recursing through matching
+## subdirectories. The result is that all the matching files under the
+## current directory structure that matches those in the corresponding target
+## directory tree are deleted and resulting empty directories are removed.
+##
+## The short story is that maching parts of the current directory tree
+## matching those of the target tree are deleted and only different files<F8>
+## remain.
+##
+## @todo This breaks when a .. relative path is specified because it is used
+##       as a base-path for the target to deldiff but it is no longer valid
+##       since it's CD'd into the local subdir. Perhaps, using -execdir in
+##       find alleviates the need to CD around.
+## @todo For some reason, the files being deleted by deldiff are not displayed.
+
+force=
+while getopts ":fh" OPTNAME "$@"; do
+#	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
+	case "$OPTNAME" in
+      f) force="-y"
+			;;
+#		h)
+#			__HELP=1
+#			break
+#			;;
+		\?)	## Invalid option
+			if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
+				echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
+			 	exit
+#			else
+#				__HELP=1
+#			 	break
+			fi
+			;;
+	   *) ## Unhandled, "valid" option
+		 	echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
+#		 	break
+		 	;;
+	esac
+done
+shift $(($OPTIND-1))
+if [ $# -eq 0 ]; then
+	echo "Need to specify a target directory to compare against."
+	exit
+fi
+
+#find . -depth -type d \( \( -path '*/Lightroom' -o -path '*/Lightroom/*' -o -path '*/*.lrdata' -o -path '*/*.lrdata/*' \) -prune -o -exec bash -c '[ -d "'"$*"'/{}" -a -d "{}" ] && (cd "{}"; deldiff -c "'"$*"'/{}"; shopt -s dotglob; files=(*); cd ->/dev/null; [ ! "{}" = '.' -a \( ${#files[@]} -eq 1 -a "${files[0]}" = "*" -o ${#files[@]} -eq 0 \) ] && echo rmdir "{}" && rmdir "{}" )' \; \)
+
+find . -depth -type d -exec bash -c '[ -d "'"$*"'/{}" -a -d "{}" ] && (cd "{}"; deldiff '$force' -c "'"$*"'/{}"; shopt -s dotglob; files=(*); cd ->/dev/null; [ ! "{}" = '.' -a \( ${#files[@]} -eq 1 -a "${files[0]}" = "*" -o ${#files[@]} -eq 0 \) ] && echo rmdir "{}" && rmdir "{}" )' \;

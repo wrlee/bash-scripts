@@ -28,9 +28,9 @@
 #####################################################
 
 echo
-test -n "$1" && cd "$1"  #if parameter exists, use as base folder
+[ -n "$1" ] && cd "$1"  #if parameter exists, use as base folder
 pwd
-ls -R | grep "^[.]/" | sed -e "s/:$//" -e "s/[^\/]*\//--/g" -e "s/^/   |/"
+command ls -R | grep "^[.]/" | sed -e "s/:$//" -e "s/[^\/]*\//--/g" -e "s/^/   |/"
 # Transformations:
 #     grep    --> select folders (filter out files)
 #     1st sed --> remove trailing colon
