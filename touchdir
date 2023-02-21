@@ -6,9 +6,13 @@
 ## @todo Add -x or --exclude to specify files to exclude (e.g., .DS_Store, etc.)
 ## @todo Add -o to set the directory to the oldest date of its contents.
 
+[ -e `dirname $0`/_include.sh ] && source _include.sh
+
+__HELP=0
+
 unset _recurse
 declare -a _all=("" "-not" "-path" "*/.*")
-while getopts ":arh" OPTNAME "$@"; do
+while getopts ":ar" OPTNAME "$@"; do
 #	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
 	case "$OPTNAME" in
 		a)	## Include "dot" files
@@ -21,21 +25,38 @@ while getopts ":arh" OPTNAME "$@"; do
 #			break
 #			;;
 		\?)	## Invalid option
-			if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
-				echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
-			 	exit
-#			else
-#				__HELP=1
-#			 	break
-			fi
+			echo arg=$OPTARG name=$OPTNAME
+			case "$OPTARG" in
+				h|\?)
+					;;
+				*)
+					echo "${t_red}Unexpected option -$OPTARG${t_reset}".
+			esac
+			__HELP=1
 			;;
 	   *) ## Unhandled, "valid" option
-		 	echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
-#		 	break
-		 	;;
+			echo "${t_red}Unprocessed option -$OPTNAME${t_reset}".
+			__HELP=1
+			;;
 	esac
 done
 shift $(($OPTIND-1))
+
+if [ $__HELP -eq 1 ]; then
+	cat <<-HELP
+
+		Set directory date to most recent of its contents
+
+		Form:
+		   `basename $0` [options] {directory}
+
+		Options:
+		   -a All: include dot-files
+		   -r Recurse: perform `basename $0` in sub-directories, first
+
+	HELP
+	exit 1
+fi
 
 ## Call touchdir against every directory under the directory.
 if [ -n "$_recurse" ]; then

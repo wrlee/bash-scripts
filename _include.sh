@@ -3,7 +3,7 @@
 
 ## Set colors when in "interactive" mode.
 ##
-## echo -e ${t_cyan} ...string... ${t_reset}
+## echo "${t_cyan} ...string... ${t_reset}"
 ##
 ## Sets multiple display attribute settings:
 ##	<ESC>[{attr1};...;{attrn}m
@@ -21,17 +21,17 @@
 if [ -t 1 ]; then
 	## Must use \033 rather than \e: bug in macOS bash v 3 does not respect \e
 	## https://superuser.com/a/1057637
-	t_reset='\033[0m'
-	t_blink='\033[5m'
-	t_bold='\033[1m'
-	t_red='\033[31m'
-	t_green='\033[32m'
-	t_yellow='\033[33m'
-	t_blue='\033[34m'
-	t_magenta='\033[35m'
-	t_cyan='\033[36m'
-#	t_brightCyan='\033[1;36m'
-	t_white='\033[37m'
+	t_reset=$'\e[0m'
+	t_blink=$'\e[5m'
+	t_bold=$'\e[1m'
+	t_red=$'\e[31m'
+	t_green=$'\e[32m'
+	t_yellow=$'\e[33m'
+	t_blue=$'\e[34m'
+	t_magenta=$'\e[35m'
+	t_cyan=$'\e[36m'
+#	t_brightCyan=$'\e[1;36m'
+	t_white=$'\e[37m'
 fi
 
 ## Output variable # of tabs based on size of field to output. This can be used

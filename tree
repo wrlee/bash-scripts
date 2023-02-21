@@ -30,12 +30,30 @@
 echo
 [ -n "$1" ] && cd "$1"  #if parameter exists, use as base folder
 pwd
-command ls -R | grep "^[.]/" | sed -e "s/:$//" -e "s/[^\/]*\//--/g" -e "s/^/   |/"
+# command ls -R | sed -e '/:$/!d' -e 's/:$//;s/[^-][^\/]*\//--/g;s/^/   /;s/-/|/'
+# 0th sed: select folders
+# 1st sed: remove colons
+# 2nd sed: replace higher level folder names with dashes
+# 3rd sed: indent graph three spaces
+# 4th sed: replace first dash with a vertical bar
+
+# command ls -R | sed -e "/^\.\//!d" -e "s/:$//" -e "s/[^\/]*\//--/g" -e "s/^/   |/"
 # Transformations:
-#     grep    --> select folders (filter out files)
+#     0th sed --> select folders (filter out files)
 #     1st sed --> remove trailing colon
 #     2nd sed --> replace higher level folder names with dashes
 #     3rd sed --> indent graph and add leading vertical bar
+
+command du -h | sed -nE '/\// {h; s/[^─][^\/]*\//──/g; s/─/├/;x;s/([0-9\.MKG]+[\t]+).*/\1/;G; s/\n//}; p'
+# 1. For entries with '/'...
+#    1. Copy line
+#    2. replace higher level folder names with dashes
+#    3. replace first dash with a vertical bar
+#    4. Exchange result w/original
+#    5. Strip text following size & tab(s)
+#    6. Append previous reformated line
+#    7. Remove
+# 2.
 topFolders=$(ls -F -1 | grep "/" | wc -l)
 test $topFolders -ne 0 || echo "   --> no subfolders"
 echo

@@ -26,7 +26,7 @@ while getopts ":fh" OPTNAME "$@"; do
 #			;;
 		\?)	## Invalid option
 			if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
-				echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
+				echo "${t_red}Unexpected option -$OPTARG${t_reset}".
 			 	exit
 #			else
 #				__HELP=1
@@ -34,7 +34,7 @@ while getopts ":fh" OPTNAME "$@"; do
 			fi
 			;;
 	   *) ## Unhandled, "valid" option
-		 	echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
+		 	echo "${t_red}Unprocessed option -$OPTNAME${t_reset}".
 #		 	break
 		 	;;
 	esac

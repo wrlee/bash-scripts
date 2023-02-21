@@ -14,4 +14,4 @@ if [ `uname` = Darwin -o `uname` = Linux ]; then
 else
    GREP_COLOR=$DIFF grep --color=always -E '^diff .*|' |GREP_COLOR=$NONE grep --color=always -E '^[^-+].*|' |GREP_COLOR=$ADDED grep --color=always -E '^\+.*|' |GREP_COLOR=$REMOVED grep --color=always -E '^-[^\-].*|'
 fi |\
-more
+more -R

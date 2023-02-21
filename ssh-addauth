@@ -2,12 +2,14 @@
 ## Add specified .pub key to (remote) server.
 ## TODO: Allow user@host to be specified for host parameter
 
+[ -e `dirname $0`/_include.sh ] && source _include.sh
+
 while getopts ":i:h" OPTNAME "$@"; do
 #	echo OPTNAME=$OPTNAME OPTARG=$OPTARG OPTIND=$OPTIND
 	case "$OPTNAME" in
       i)
 				if [ ! -f "$OPTARG" ]; then
-					echo -e "${t_red}\"$OPTARG\" does not exist.${t_reset}"
+					echo "${t_red}\"$OPTARG\" does not exist.${t_reset}"
 					exit
 				fi
 						__KEY=-i "$OPTARG"
@@ -17,14 +19,14 @@ while getopts ":i:h" OPTNAME "$@"; do
 				;;
  	 	 \?)	## Invalid option
 				if [ -n "$OPTARG" -a "$OPTARG" != '?' ]; then
-					echo -e "${t_red}Unexpected option -$OPTARG${t_reset}".
+					echo "${t_red}Unexpected option -$OPTARG${t_reset}".
 					exit
 				else
 					__HELP=1
 				fi
 				;;
  	   	*) ## Unhandled, "valid" option
-				echo -e "${t_red}Unprocessed option -$OPTNAME${t_reset}".
+				echo "${t_red}Unprocessed option -$OPTNAME${t_reset}".
 				;;
 	esac
 done
@@ -33,15 +35,15 @@ shift $(($OPTIND-1))
 if [ $# -lt 1 -o -n "$__HELP" ]; then
 	cat <<-ENDHERE
 
-	Adds specified .pub keys to remote server.
+		Adds specified .pub keys to remote server.
 
-	Form:
-		$0 [ -i priv_key.pem ] [host] [public_key_file.pub]
+		Form:
+		   `basename $0` [ -i priv_key.pem ] [host] [public_key_file.pub]
 
-	host: name of host to update. This should be the nickname for an entry in the
-		.ssh/config file. If not specified, the key is added to the current account.
-	public_key_file.pub: Public key to be added to host. If not specified, find
-		default keys.
+		host: name of host to update. This should be the nickname for an entry in the
+			.ssh/config file. If not specified, the key is added to the current account.
+		public_key_file.pub: Public key to be added to host. If not specified, find
+			default keys.
 
 ENDHERE
 	exit 24
