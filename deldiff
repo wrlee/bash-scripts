@@ -18,49 +18,40 @@ while getopts "tcrnyh?" OPTNAME "$@"; do
 	case "$OPTNAME" in
       t)
          __TESTONLY=1
-		 ;;
+			;;
       c)
          __Key=C
          __NOTEST=1
-	     ;;
+			;;
       r)
          __Key=R
          __NOTEST=1
-		 ;;
+			;;
       y)
          __RM_Y=-f
          ;;
 
       n)
          __NOTEST=1
-		 ;;
-      h|?)
+			;;
+      h|\?)
 		__HELP=1
 		;;
       *)
-		echo -e "${t_red}Unexpected result from getopts${t_reset}".
-		break
+		echo "${t_red}Unexpected '-$OPTNAME' option from getopts${t_reset}".
+		exit
 		;;
 	esac
 done
 shift $(($OPTIND-1))
 
-case "$OSTYPE" in
-darwin*)
-   FMT='-f %z'
-   ;;
-*)
-   FMT='-c %s'
-   ;;
-esac
-
 if [ $__HELP -eq 0 -a ! -d "$*" ]; then
    if [ -z "$*" ]; then
-      echo -e "${t_red}No directory specified.${t_reset}"
-	  echo
+      echo "${t_red}No directory specified.${t_reset}"
+		echo
    else
-      echo -e "${t_red}'${t_cyan}$*${t_red}' is not a valid directory.${t_reset}"
-	  exit
+      echo "${t_red}'${t_cyan}$*${t_red}' is not a valid directory.${t_reset}"
+		exit
    fi
    __HELP=1
 fi
@@ -89,61 +80,94 @@ EOHELP
 	exit
 fi
 if [ "$PWD" -ef "$*" ]; then
-	echo -e "${t_red}Directory is the same as this directory: \"${t_cyan}$*${t_red}\".${t_reset}"
+	echo "${t_red}Remote directory is the same as this directory: \"${t_cyan}$*${t_red}\".${t_reset}"
 	exit 24
 fi
 
-echo "$*"
-echo -e "Comparing \"${t_cyan}$PWD${t_reset}\""
-echo -e "     with \"${t_cyan}$*${t_reset}\"."
+filesize() {
+	case "$OSTYPE" in
+	darwin*)
+		stat -f %z -- "$@"
+		;;
+	*)
+		stat -c %s -- "$@"
+		;;
+	esac
+}
+filedate() {
+	case "$OSTYPE" in
+	darwin*)
+		stat -f %m -- "$@"
+		;;
+	*)
+		stat -c %y -- "$@"|sed 's/ .*//'
+		;;
+	esac
+}
+
+# echo "Comparing \"${t_cyan}$PWD${t_reset}\""
+# echo "     with \"${t_cyan}$*${t_reset}\""
+declare -a matching_files
 if [ $__NOTEST -eq 0 ]; then
    for i in * .*; do
       if [ -f "$*/$i" ]; then
          _f1=$i
          _f2=$*/$i
-	     if [ `stat $FMT -- "$_f1"` -eq `stat $FMT -- "$_f2"` ]; then
-			 diff -- "$i" "$*/$i">/dev/null
-			 if [ $? -eq 0 ]; then
-				echo "$i"
-			 elif [ $? -eq 1 ]; then
-				echo "$i" does not match
-			 fi
-		 fi
+			## If sizes are the same, compare content
+			if [ `filesize "$_f1"` -eq `filesize "$_f2"` ]; then
+				diff -- "$i" "$*/$i">/dev/null
+				if [ $? -eq 0 ]; then
+					matching_files+=($i)
+					detail=
+					if [  "$i" -ef "$*/$i" ]
+						then detail=' (current and remote are hard-linked)'
+						else detail="\t`filedate "$_f1"`  `filedate "$_f2"`"
+					fi
+					echo -e "$i$detail"
+				elif [ $? -eq 1 ]; then
+					echo "$i" same size, does not match
+				fi
+			fi
       fi
    done
+	if [ ${#matching_files[@]} -eq 0 -a -z "$__Key" ]; then
+		echo "No matching files... nothing to delete."
+		exit 0
+	fi
 fi
 if [ $__TESTONLY -ne 1 ]; then
 	echo
 	while [ -z "$__Key" ]; do
-    echo -e "Current: \"${t_cyan}$PWD${t_reset}\""
-    echo -e "Remote:  \"${t_cyan}$*${t_reset}\"."
+		echo "Current: \"${t_cyan}$PWD${t_reset}\""
+		echo "Remote:  \"${t_cyan}$*${t_reset}\""
 		read -n 1 -rp "Delete (c)urrent or (r)emote duplicate files (C|R|Esc|Q)? "
 		echo
 		case $REPLY in
-	    c|C) __Key=C
-		   ;;
-	    r|R) __Key=R
-		   ;;
-        *)
-		exit
-	  esac
+		c|C) __Key=C
+			;;
+		r|R) __Key=R
+			;;
+		*)
+			exit
+		esac
 	done
 	for f in * .*; do
 		if [ -f "$*/$f" ]; then
 			_f1=$f
 			_f2=$*/$f
-			if [ `stat $FMT -- "$_f1"` -eq `stat $FMT -- "$_f2"` ]; then
+			## If sizes are the same, compare content
+			if [ `filesize "$_f1"` -eq `filesize "$_f2"` ]; then
 				diff -- "$f" "$*/$f">/dev/null
 				if [ $? -eq 0 ]; then
-				   if [ $__Key = C ]; then
-					  rm $__RM_Y -v -- "$f"
-				   elif [ $__Key = R ]; then
-					  rm $__RM_Y -v -- "$*/$f"
-				   else
-					  echo -e "${t_red}Unexpected response '$__Key'${t_reset}"
-				   fi
+					if [ $__Key = C ]; then
+						rm $__RM_Y -v -- "$f"
+					elif [ $__Key = R ]; then
+						rm $__RM_Y -v -- "$*/$f"
+					else
+						echo "${t_red}Unexpected response '$__Key'${t_reset}"
+					fi
 				fi
 			fi
-		 fi
+		fi
 	done
 fi
